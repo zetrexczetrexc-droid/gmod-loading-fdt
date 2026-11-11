@@ -8,8 +8,7 @@
         * { margin: 0; padding: 0; box-sizing: border-box; }
 
         body {
-            /* Красивый фон: ночной город в стиле аниме/арт */
-            background: linear-gradient(rgba(0, 0, 0, 0.7), rgba(0, 0, 0, 0.8)), 
+            background: linear-gradient(rgba(0, 0, 0, 0.75), rgba(0, 0, 0, 0.85)),
                         url('https://images.unsplash.com/photo-1519501025264-65ba15a82390?q=80&w=2070&auto=format&fit=crop') no-repeat center center fixed;
             background-size: cover;
             color: #eee;
@@ -46,25 +45,10 @@
             padding-bottom: 10px;
         }
 
-        .rules-block ol {
-            padding-left: 20px;
-            margin-bottom: 15px;
-        }
-
-        .rules-block li {
-            margin-bottom: 8px;
-            color: #ccc;
-        }
-
-        .rules-block li strong {
-            color: #fff;
-        }
-
-        .rules-block ol ol {
-            margin-top: 5px;
-            padding-left: 15px;
-            list-style-type: lower-alpha;
-        }
+        .rules-block ol { padding-left: 20px; margin-bottom: 15px; }
+        .rules-block li { margin-bottom: 8px; color: #ccc; }
+        .rules-block li strong { color: #fff; }
+        .rules-block ol ol { margin-top: 5px; padding-left: 15px; list-style-type: lower-alpha; }
 
         .rules-note {
             font-size: 0.8rem;
@@ -76,7 +60,6 @@
             font-style: italic;
         }
 
-        /* Скрываем скроллбар для красоты */
         .rules-block::-webkit-scrollbar { width: 5px; }
         .rules-block::-webkit-scrollbar-thumb { background: #4facfe; border-radius: 5px; }
 
@@ -93,6 +76,7 @@
             text-align: right;
             box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
             z-index: 10;
+            min-width: 200px;
         }
 
         .player-info .label {
@@ -108,6 +92,14 @@
             color: #00f2fe;
             text-shadow: 0 0 10px rgba(0, 242, 254, 0.5);
             margin-top: 5px;
+            word-break: break-word;
+        }
+
+        .player-info .steamid {
+            font-size: 0.7rem;
+            color: #888;
+            margin-top: 5px;
+            font-family: monospace;
         }
 
         /* --- ЦЕНТР: ЛОГОТИП И ЗАГРУЗКА --- */
@@ -121,16 +113,27 @@
             padding: 20px;
         }
 
-        .center-container h1 {
+        /* Переливающаяся надпись */
+        .animated-gradient-text {
             font-size: 3.5rem;
             font-weight: 900;
             text-transform: uppercase;
             letter-spacing: 5px;
             margin-bottom: 10px;
-            background: linear-gradient(90deg, #4facfe, #00f2fe);
+            background: linear-gradient(90deg, #4facfe, #00f2fe, #a18cd1, #fbc2eb, #4facfe);
+            background-size: 300% 100%;
             -webkit-background-clip: text;
+            background-clip: text;
             -webkit-text-fill-color: transparent;
+            color: transparent;
+            animation: gradient-move 4s ease-in-out infinite;
             filter: drop-shadow(0 0 20px rgba(79, 172, 254, 0.4));
+        }
+
+        @keyframes gradient-move {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
         }
 
         #map-info {
@@ -143,10 +146,7 @@
             backdrop-filter: blur(5px);
         }
 
-        .progress-container {
-            width: 500px;
-            max-width: 90%;
-        }
+        .progress-container { width: 500px; max-width: 90%; }
 
         .progress-bar {
             width: 100%;
@@ -174,11 +174,10 @@
             font-family: monospace;
         }
 
-        /* Адаптив для маленьких экранов */
         @media (max-width: 900px) {
             .rules-block { width: 280px; font-size: 0.8rem; }
             .player-info .name { font-size: 1.4rem; }
-            .center-container h1 { font-size: 2.5rem; }
+            .animated-gradient-text { font-size: 2.5rem; }
         }
     </style>
 </head>
@@ -203,16 +202,16 @@
         <p class="rules-note">Незнание правил не освобождает от ответственности.</p>
     </div>
 
-    <!-- ПРАВЫЙ ВЕРХНИЙ УГОЛ: НИК ИГРОКА -->
+    <!-- ПРАВЫЙ ВЕРХНИЙ УГОЛ: НИК И STEAMID -->
     <div class="player-info">
         <div class="label">Добро пожаловать,</div>
-        <!-- Сюда можно подставить ник через JS, если у вас есть скрипт -->
-        <div class="name" id="player-name">Игрок</div>
+        <div class="name" id="player-name">Загрузка...</div>
+        <div class="steamid" id="player-steamid"></div>
     </div>
 
     <!-- ЦЕНТР: ЗАГРУЗКА -->
     <div class="center-container">
-        <h1>FDT | Project</h1>
+        <h1 class="animated-gradient-text">FDT | Project</h1>
         <p id="map-info">Подключение к серверу...</p>
         
         <div class="progress-container">
@@ -224,38 +223,111 @@
     </div>
 
     <script>
-        // Хук GameDetails вызывается GMod при передаче данных сервера
-        function GameDetails(servername, serverurl, mapname, maxplayers, steamid, gamemode) {
-            // Обновляем заголовок (если нужно, можно оставить FDT Project)
-            // document.querySelector('h1').textContent = servername; 
-            
-            document.getElementById('map-info').textContent =
-                'Карта: ' + mapname + ' | Режим: ' + gamemode + ' | Слотов: ' + maxplayers;
-            
-            // ПРИМЕЧАНИЕ: Получение ника игрока требует внешнего API (PHP/Steam API).
-            // Если у вас есть серверный скрипт, который возвращает имя, вы можете
-            // раскомментировать и адаптировать код ниже.
-            /*
-            fetch('/get_player_name.php?steamid=' + steamid)
-                .then(response => response.text())
-                .then(name => {
-                    if(name) document.getElementById('player-name').textContent = name;
-                })
-                .catch(err => console.log('Не удалось загрузить ник:', err));
-            */
+        // ============================================================
+        // 1. ПОЛУЧЕНИЕ STEAMID ИЗ URL
+        // ============================================================
+        // В server.cfg должно быть: sv_loadingurl "https://ваш-сайт.com/loading?steamid=%s"
+        // GMod автоматически подставит SteamID игрока вместо %s
+        function getSteamIdFromUrl() {
+            try {
+                const params = new URLSearchParams(window.location.search);
+                return params.get('steamid') || null;
+            } catch (e) {
+                console.error('Ошибка парсинга URL:', e);
+                return null;
+            }
         }
 
-        // SetStatusChanged - вызывается при смене статуса загрузки
+        // ============================================================
+        // 2. ПОЛУЧЕНИЕ НИКА ЧЕРЕЗ STEAM XML-ПРОФИЛЬ
+        // ============================================================
+        // Используем публичный XML профиль Steam (не требует API ключа).
+        // ВАЖНО: Из-за политики CORS браузер не может напрямую запросить 
+        // steamcommunity.com. Поэтому используется прокси-сервис allorigins.win
+        // или ваш собственный PHP-скрипт.
+        // 
+        // Если у вас есть свой PHP-скрипт get_name.php — раскомментируйте 
+        // блок с fetch к вашему скрипту и закомментируйте блок с прокси.
+        
+        async function fetchPlayerName(steamId) {
+            const nameElement = document.getElementById('player-name');
+            const idElement = document.getElementById('player-steamid');
+
+            // Отображаем SteamID сразу
+            if (idElement && steamId) {
+                idElement.textContent = 'SteamID: ' + steamId;
+            }
+
+            if (!steamId) {
+                nameElement.textContent = 'Игрок';
+                if (idElement) idElement.textContent = 'SteamID: не определён';
+                return;
+            }
+
+            // ----- ВАРИАНТ А: Через свой PHP-скрипт (рекомендуется) -----
+            /*
+            try {
+                const response = await fetch('/get_name.php?steamid=' + encodeURIComponent(steamId));
+                if (response.ok) {
+                    const name = (await response.text()).trim();
+                    nameElement.textContent = name || 'Игрок';
+                } else {
+                    nameElement.textContent = 'Игрок';
+                }
+            } catch (e) {
+                console.error('Ошибка запроса к get_name.php:', e);
+                nameElement.textContent = 'Игрок';
+            }
+            */
+
+            // ----- ВАРИАНТ Б: Через публичный CORS-прокси (без своего сервера) -----
+            try {
+                const steamUrl = 'https://steamcommunity.com/profiles/' + encodeURIComponent(steamId) + '/?xml=1';
+                const proxyUrl = 'https://api.allorigins.win/raw?url=' + encodeURIComponent(steamUrl);
+                
+                const response = await fetch(proxyUrl);
+                if (!response.ok) throw new Error('HTTP ' + response.status);
+                
+                const xmlText = await response.text();
+                const parser = new DOMParser();
+                const xmlDoc = parser.parseFromString(xmlText, 'text/xml');
+                const steamIDNode = xmlDoc.querySelector('steamID');
+                
+                if (steamIDNode && steamIDNode.textContent) {
+                    nameElement.textContent = steamIDNode.textContent;
+                } else {
+                    nameElement.textContent = 'Игрок';
+                }
+            } catch (e) {
+                console.error('Ошибка получения ника через прокси:', e);
+                nameElement.textContent = 'Игрок';
+            }
+        }
+
+        // ============================================================
+        // 3. ЗАПУСК ПРИ ЗАГРУЗКЕ СТРАНИЦЫ
+        // ============================================================
+        document.addEventListener('DOMContentLoaded', function() {
+            const steamId = getSteamIdFromUrl();
+            fetchPlayerName(steamId);
+        });
+
+        // ============================================================
+        // 4. СТАНДАРТНЫЕ ХУКИ GARRY'S MOD
+        // ============================================================
+        function GameDetails(servername, serverurl, mapname, maxplayers, steamid, gamemode) {
+            document.getElementById('map-info').textContent =
+                'Карта: ' + mapname + ' | Режим: ' + gamemode + ' | Слотов: ' + maxplayers;
+        }
+
         function SetStatusChanged(status) {
             document.getElementById('status').textContent = status;
         }
 
-        // DownloadingFile - вызывается при загрузке каждого файла
         function DownloadingFile(filename) {
             document.getElementById('status').textContent = 'Загрузка: ' + filename;
         }
 
-        // LoadingProgressChanged - прогресс от 0 до 100
         function LoadingProgressChanged(progress) {
             document.getElementById('progress').style.width = progress + '%';
         }
