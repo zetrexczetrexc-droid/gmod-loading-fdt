@@ -1,1 +1,336 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FDT Project | Загрузка...</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
 
+        body {
+            background: linear-gradient(rgba(0, 0, 0, 0.75), rgba(0, 0, 0, 0.85)),
+                        url('https://images.unsplash.com/photo-1519501025264-65ba15a82390?q=80&w=2070&auto=format&fit=crop') no-repeat center center fixed;
+            background-size: cover;
+            color: #eee;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            min-height: 100vh;
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* --- ЛЕВЫЙ ВЕРХНИЙ УГОЛ: ПРАВИЛА --- */
+        .rules-block {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            width: 380px;
+            max-height: 85vh;
+            overflow-y: auto;
+            background: rgba(20, 20, 30, 0.85);
+            backdrop-filter: blur(10px);
+            border-left: 4px solid #4facfe;
+            border-radius: 0 12px 12px 0;
+            padding: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            font-size: 0.9rem;
+            line-height: 1.5;
+            z-index: 10;
+        }
+
+        .rules-block h2 {
+            font-size: 1.2rem;
+            margin-bottom: 15px;
+            color: #4facfe;
+            border-bottom: 1px solid rgba(79, 172, 254, 0.3);
+            padding-bottom: 10px;
+        }
+
+        .rules-block ol { padding-left: 20px; margin-bottom: 15px; }
+        .rules-block li { margin-bottom: 8px; color: #ccc; }
+        .rules-block li strong { color: #fff; }
+        .rules-block ol ol { margin-top: 5px; padding-left: 15px; list-style-type: lower-alpha; }
+
+        .rules-note {
+            font-size: 0.8rem;
+            color: #ff6b6b;
+            text-align: center;
+            margin-top: 15px;
+            padding-top: 10px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            font-style: italic;
+        }
+
+        .rules-block::-webkit-scrollbar { width: 5px; }
+        .rules-block::-webkit-scrollbar-thumb { background: #4facfe; border-radius: 5px; }
+
+        /* --- ПРАВЫЙ ВЕРХНИЙ УГОЛ: ИНФО ИГРОКА --- */
+        .player-info {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: rgba(20, 20, 30, 0.85);
+            backdrop-filter: blur(10px);
+            border-right: 4px solid #00f2fe;
+            border-radius: 12px 0 0 12px;
+            padding: 15px 25px;
+            text-align: right;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            z-index: 10;
+            min-width: 200px;
+        }
+
+        .player-info .label {
+            font-size: 0.8rem;
+            color: #aaa;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .player-info .name {
+            font-size: 1.8rem;
+            font-weight: bold;
+            color: #00f2fe;
+            text-shadow: 0 0 10px rgba(0, 242, 254, 0.5);
+            margin-top: 5px;
+            word-break: break-word;
+        }
+
+        .player-info .steamid {
+            font-size: 0.7rem;
+            color: #888;
+            margin-top: 5px;
+            font-family: monospace;
+        }
+
+        /* --- ЦЕНТР: ЛОГОТИП И ЗАГРУЗКА --- */
+        .center-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            text-align: center;
+            padding: 20px;
+        }
+
+        /* Переливающаяся надпись */
+        .animated-gradient-text {
+            font-size: 3.5rem;
+            font-weight: 900;
+            text-transform: uppercase;
+            letter-spacing: 5px;
+            margin-bottom: 10px;
+            background: linear-gradient(90deg, #4facfe, #00f2fe, #a18cd1, #fbc2eb, #4facfe);
+            background-size: 300% 100%;
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+            color: transparent;
+            animation: gradient-move 4s ease-in-out infinite;
+            filter: drop-shadow(0 0 20px rgba(79, 172, 254, 0.4));
+        }
+
+        @keyframes gradient-move {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        #map-info {
+            font-size: 1.1rem;
+            color: #ddd;
+            margin-bottom: 30px;
+            background: rgba(0, 0, 0, 0.4);
+            padding: 8px 20px;
+            border-radius: 50px;
+            backdrop-filter: blur(5px);
+        }
+
+        .progress-container { width: 500px; max-width: 90%; }
+
+        .progress-bar {
+            width: 100%;
+            height: 12px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            overflow: hidden;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #4facfe, #00f2fe);
+            width: 0%;
+            transition: width 0.3s ease;
+            box-shadow: 0 0 15px #00f2fe;
+        }
+
+        #status {
+            margin-top: 15px;
+            font-size: 0.9rem;
+            color: #aaa;
+            min-height: 20px;
+            font-family: monospace;
+        }
+
+        @media (max-width: 900px) {
+            .rules-block { width: 280px; font-size: 0.8rem; }
+            .player-info .name { font-size: 1.4rem; }
+            .animated-gradient-text { font-size: 2.5rem; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- ЛЕВЫЙ ВЕРХНИЙ УГОЛ: ПРАВИЛА -->
+    <div class="rules-block">
+        <h2>Правила сервера FDT Project</h2>
+        <ol>
+            <li><strong>Запрещено</strong> создавать аварийные ситуации, мешающие другим игрокам. — бан на 24 часа.</li>
+            <li><strong>Запрещено</strong> создавать помеху игрокам. — бан на 24 часа.</li>
+            <li>На сервере действует <strong>ПДД России</strong> (кроме карт: Суммы, Озерскр).
+                <ol>
+                    <li>Нарушение ПДД (три и более раз). — бан на 24 часа.</li>
+                    <li>Подрезы / обгоны с намерением подрезать. — бан на 48 часов.</li>
+                    <li>Специальное перегораживание дороги. — бан на 24 часа.</li>
+                    <li>Обгон троллейбуса другого/того же маршрута разрешён, если не нарушает ПДД и не создаёт аварийную ситуацию. Иначе — бан на 24 часа.</li>
+                    <li><strong>Запрещено</strong> мешать человеку, который выполняет обгон. — бан на 24 часа.</li>
+                </ol>
+            </li>
+        </ol>
+        <p class="rules-note">Незнание правил не освобождает от ответственности.</p>
+    </div>
+
+    <!-- ПРАВЫЙ ВЕРХНИЙ УГОЛ: НИК И STEAMID -->
+    <div class="player-info">
+        <div class="label">Добро пожаловать,</div>
+        <div class="name" id="player-name">Загрузка...</div>
+        <div class="steamid" id="player-steamid"></div>
+    </div>
+
+    <!-- ЦЕНТР: ЗАГРУЗКА -->
+    <div class="center-container">
+        <h1 class="animated-gradient-text">FDT | Project</h1>
+        <p id="map-info">Подключение к серверу...</p>
+        
+        <div class="progress-container">
+            <div class="progress-bar">
+                <div class="progress-fill" id="progress"></div>
+            </div>
+            <p id="status">Инициализация...</p>
+        </div>
+    </div>
+
+    <script>
+        // ============================================================
+        // 1. ПОЛУЧЕНИЕ STEAMID ИЗ URL
+        // ============================================================
+        // В server.cfg должно быть: sv_loadingurl "https://ваш-сайт.com/loading?steamid=%s"
+        // GMod автоматически подставит SteamID игрока вместо %s
+        function getSteamIdFromUrl() {
+            try {
+                const params = new URLSearchParams(window.location.search);
+                return params.get('steamid') || null;
+            } catch (e) {
+                console.error('Ошибка парсинга URL:', e);
+                return null;
+            }
+        }
+
+        // ============================================================
+        // 2. ПОЛУЧЕНИЕ НИКА ЧЕРЕЗ STEAM XML-ПРОФИЛЬ
+        // ============================================================
+        // Используем публичный XML профиль Steam (не требует API ключа).
+        // ВАЖНО: Из-за политики CORS браузер не может напрямую запросить 
+        // steamcommunity.com. Поэтому используется прокси-сервис allorigins.win
+        // или ваш собственный PHP-скрипт.
+        // 
+        // Если у вас есть свой PHP-скрипт get_name.php — раскомментируйте 
+        // блок с fetch к вашему скрипту и закомментируйте блок с прокси.
+        
+        async function fetchPlayerName(steamId) {
+            const nameElement = document.getElementById('player-name');
+            const idElement = document.getElementById('player-steamid');
+
+            // Отображаем SteamID сразу
+            if (idElement && steamId) {
+                idElement.textContent = 'SteamID: ' + steamId;
+            }
+
+            if (!steamId) {
+                nameElement.textContent = 'Игрок';
+                if (idElement) idElement.textContent = 'SteamID: не определён';
+                return;
+            }
+
+            // ----- ВАРИАНТ А: Через свой PHP-скрипт (рекомендуется) -----
+            /*
+            try {
+                const response = await fetch('/get_name.php?steamid=' + encodeURIComponent(steamId));
+                if (response.ok) {
+                    const name = (await response.text()).trim();
+                    nameElement.textContent = name || 'Игрок';
+                } else {
+                    nameElement.textContent = 'Игрок';
+                }
+            } catch (e) {
+                console.error('Ошибка запроса к get_name.php:', e);
+                nameElement.textContent = 'Игрок';
+            }
+            */
+
+            // ----- ВАРИАНТ Б: Через публичный CORS-прокси (без своего сервера) -----
+            try {
+                const steamUrl = 'https://steamcommunity.com/profiles/' + encodeURIComponent(steamId) + '/?xml=1';
+                const proxyUrl = 'https://api.allorigins.win/raw?url=' + encodeURIComponent(steamUrl);
+                
+                const response = await fetch(proxyUrl);
+                if (!response.ok) throw new Error('HTTP ' + response.status);
+                
+                const xmlText = await response.text();
+                const parser = new DOMParser();
+                const xmlDoc = parser.parseFromString(xmlText, 'text/xml');
+                const steamIDNode = xmlDoc.querySelector('steamID');
+                
+                if (steamIDNode && steamIDNode.textContent) {
+                    nameElement.textContent = steamIDNode.textContent;
+                } else {
+                    nameElement.textContent = 'Игрок';
+                }
+            } catch (e) {
+                console.error('Ошибка получения ника через прокси:', e);
+                nameElement.textContent = 'Игрок';
+            }
+        }
+
+        // ============================================================
+        // 3. ЗАПУСК ПРИ ЗАГРУЗКЕ СТРАНИЦЫ
+        // ============================================================
+        document.addEventListener('DOMContentLoaded', function() {
+            const steamId = getSteamIdFromUrl();
+            fetchPlayerName(steamId);
+        });
+
+        // ============================================================
+        // 4. СТАНДАРТНЫЕ ХУКИ GARRY'S MOD
+        // ============================================================
+        function GameDetails(servername, serverurl, mapname, maxplayers, steamid, gamemode) {
+            document.getElementById('map-info').textContent =
+                'Карта: ' + mapname + ' | Режим: ' + gamemode + ' | Слотов: ' + maxplayers;
+        }
+
+        function SetStatusChanged(status) {
+            document.getElementById('status').textContent = status;
+        }
+
+        function DownloadingFile(filename) {
+            document.getElementById('status').textContent = 'Загрузка: ' + filename;
+        }
+
+        function LoadingProgressChanged(progress) {
+            document.getElementById('progress').style.width = progress + '%';
+        }
+    </script>
+</body>
+</html>
